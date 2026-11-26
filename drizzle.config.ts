@@ -10,6 +10,7 @@ const { DATABASE_URL } = parseDatabaseEnv(process.env);
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/server/db/schema/index.ts",
+  tablesFilter: ["kz_*"],
   out: "./drizzle",
   dbCredentials: {
     url: DATABASE_URL,

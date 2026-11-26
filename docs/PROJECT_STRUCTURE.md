@@ -37,7 +37,7 @@ kriyzen/
       api/trpc.ts
       api/routers/             # thin protected tRPC routers
       db/index.ts
-      db/schema/               # app schema and unchanged vendor schema
+      db/schema/               # KriyZen-owned tables only; vendor tables remain Corsair-managed
       auth/                    # selected solution; server session
       corsair.ts               # singleton configuration, server-only
       integrations/            # verified tenant adapters

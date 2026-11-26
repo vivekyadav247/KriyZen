@@ -10,6 +10,9 @@ Project assignment sources:
 - Thread reference repository: https://github.com/ishaansatapathy/Thread — reference only for product ideas and documented integration concepts. Its README describes a multi-app Next.js + Express architecture, OpenAI usage, and a broad MCP tool surface; those choices do not change KriyZen's locked single-app stack, Groq provider, or MCP safety requirements. No Thread source code has been copied.
 
 Technical sources inspected during planning: starter README/guide/schema/package via GitHub in this conversation; Corsair adapter and security docs via web. Their documented behavior supports CLI discovery, cache and live-write separation, starter table ownership, HTTP MCP and unsafe script warning. The proposed application schema and phase roadmap are original design decisions, not upstream requirements.
+- Corsair current core DB source (P02.3 compatibility review): https://github.com/corsairdev/corsair/blob/main/packages/corsair/db/kysely/database.ts — observed current source accepts `pg.Pool`, postgres.js `Sql`, better-sqlite3, or a Kysely database; it adapts PostgreSQL pools through Kysely. This is not a substitute for checking the pinned package during P03.
+- Corsair current database type/schema source: https://github.com/corsairdev/corsair/blob/main/packages/corsair/db/index.ts — includes `corsair_permissions` in addition to the four older documented tables.
+- Corsair Google Demo package inspected: https://raw.githubusercontent.com/corsairdev/google-demo/main/package.json — uses `corsair@^0.1.74`, `drizzle-orm@^0.41.0`, and `postgres@^3.4.4`; no source code copied. No license file was visible in the repository root listing when reviewed.
 - https://docs.corsair.dev/mcp-adapters/vercel-ai
 - https://corsair.dev/security
 - https://github.com/corsairdev/corsair/tree/main/packages/mcp

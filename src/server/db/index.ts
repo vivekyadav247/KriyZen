@@ -4,6 +4,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import { parseDatabaseEnv } from "../../env.schema";
+import { schema } from "./schema";
 
 function createDatabase(connectionString: string) {
   const pool = new Pool({
@@ -13,7 +14,7 @@ function createDatabase(connectionString: string) {
     connectionTimeoutMillis: 5_000,
   });
 
-  return { connectionString, pool, db: drizzle(pool) };
+  return { connectionString, pool, db: drizzle(pool, { schema }) };
 }
 
 type DatabaseClient = ReturnType<typeof createDatabase>;

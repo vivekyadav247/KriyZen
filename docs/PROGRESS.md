@@ -1,6 +1,6 @@
 ﻿# Development progress — handoff log
 
-Current status: P00 and P01 foundation are complete. P02 is active; P02.1 and P02.2 are complete. P02.3 schema implementation has not started. The initial foundation commit is `ba731ac` on `main`.
+Current status: P00 and P01 foundation are complete. P02 is active; P02.1, P02.2, and P02.3 are complete. P02.4 migration work is not started. The initial foundation commit is `ba731ac` on `main`.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -11,10 +11,11 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1 and P0
 | P01.4 | Complete | tRPC v11 backend and client foundation verified by typecheck, lint, build, direct API request, and headless browser client query. |
 | P01.5 | Complete | Zod environment allowlists, safe local template, Next.js loading, secret ignore rules, parser and production app checks verified (see completion log). |
 | P01.6 | Complete | Foundation audit passed; initial commit `ba731ac` verified. |
-| P02 | Active | P02.1 PostgreSQL infrastructure and P02.2 Drizzle foundation complete; stop before P02.3. |
+| P02 | Active | P02.1 PostgreSQL infrastructure, P02.2 Drizzle foundation, and P02.3 KriyZen-owned schema complete; P02.4 is not started. |
 | P02.1 | Complete | Compose PostgreSQL 16.16 healthy, local connectivity and database checks passed, and named-volume persistence verified after restart (see completion log). |
 | P02.2 | Complete | Drizzle ORM/Kit, lazy node-postgres pool, URL validation, CLI config and scripts verified; no tables or migrations created (see completion log). |
-| P02.3–P14 | Not started | — |
+| P02.3 | Complete | Eight documented KriyZen-owned tables and workspace-scoped constraints implemented; no migration generated or applied. |
+| P02.4–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
@@ -27,6 +28,14 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1 and P0
 
 ## Handoff template
 Date / phase / status / completed / changed files / commands and actual outcomes / manual verification / decisions / known blockers / next smallest task. Update after each work session; never log secrets or email content.
+
+## P02.3 completion log (2026-11-26)
+- Implemented the eight documented KriyZen-owned tables in `src/server/db/schema/`: users, workspaces, connections, conversations, chat messages, action plans, action steps, and activity. Added PostgreSQL enums, documented defaults, checks, unique constraints, indexes, workspace-scoped composite foreign keys, restrictive delete behavior, and Drizzle relations. The schema entry point contains KriyZen tables only and is wired into the lazy server-only Drizzle client.
+- `drizzle.config.ts` points only to `src/server/db/schema/index.ts` and filters `kz_*`. A schema/config inspection confirmed exactly eight exported tables and the expected PostgreSQL dialect and `./drizzle` output. No dependency was added.
+- Added ADR-015 for the approved activity outcome semantics. Updated `docs/DATABASE.md`, `docs/PROJECT_STRUCTURE.md`, and `docs/REFERENCES.md`. Documented Corsair's observed `corsair_permissions` table as version-dependent and made SDK pinning, migration ownership, and compatibility checks a P03 gate. `corsair_account_id` remains an opaque nullable text reference without a cross-vendor foreign key.
+- Server-side invariants remain required: derive workspace and tenant from the verified session, verify Corsair account ownership/integration, reject stale/expired/hash-mismatched approvals and replay, and reconcile uncertain remote outcomes. Step idempotency keys prevent duplicate local claims but do not guarantee exactly-once remote writes.
+- Verification passed: `pnpm typecheck`, `pnpm lint`, and `pnpm build`. Schema/config inspection passed. A read-only PostgreSQL catalog check returned zero KriyZen tables, zero Corsair tables, and zero Drizzle migration-history tables. No migration was generated or applied; no database tables were created. The existing PostgreSQL service was left unchanged.
+- P02.3 complete. Stop before P02.4.
 
 ## P02.2 completion log (2026-11-26)
 - Installed exact versions: runtime `drizzle-orm@0.45.4` and `pg@8.23.1`; development `drizzle-kit@0.31.11`, `@types/pg@8.16.0`, and `@next/env@15.5.29` (matched to Next.js 15.5.29). Registry metadata showed Drizzle ORM accepts `pg >=8`; `pg@8.23.1` supports Node >=16. Official Drizzle docs support its node-postgres driver. The Corsair Google Demo package uses `drizzle-orm@^0.41.0` and `postgres@^3.4.4` (postgres.js), but does not specify a required pg driver or PostgreSQL major version. Corsair schema/migration compatibility remains to be reconciled before P02.3 migrations.
