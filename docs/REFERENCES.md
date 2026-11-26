@@ -16,6 +16,7 @@ Technical sources inspected during planning: starter README/guide/schema/package
 - https://docs.corsair.dev/mcp-adapters/vercel-ai
 - https://corsair.dev/security
 - https://github.com/corsairdev/corsair/tree/main/packages/mcp
+- Dependency audit advisories reviewed for P02.6: https://github.com/postcss/postcss/security/advisories and https://github.com/isaacs/minimatch/security/advisories/GHSA-g3hv-75wg-m249. Next.js current canary package manifest uses PostCSS `8.5.23`; this does not by itself establish a supported stable Next.js 15 patch: https://github.com/vercel/next.js/blob/canary/packages/next/package.json.
 
 Implementation references to consult and verify at each phase:
 - https://nextjs.org/docs/app

@@ -1,6 +1,6 @@
 ﻿# Development progress — handoff log
 
-Current status: P00 and P01 foundation are complete. P02 is active; P02.1 through P02.5 are complete. P02.6 is not started. The initial foundation commit is `ba731ac` on `main`.
+Current status: P00, P01, and P02 are complete. P02.6 final database audit is complete. P03 Google/Corsair connectivity has not started. The initial foundation commit is `ba731ac` on `main`.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -11,25 +11,36 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1 throug
 | P01.4 | Complete | tRPC v11 backend and client foundation verified by typecheck, lint, build, direct API request, and headless browser client query. |
 | P01.5 | Complete | Zod environment allowlists, safe local template, Next.js loading, secret ignore rules, parser and production app checks verified (see completion log). |
 | P01.6 | Complete | Foundation audit passed; initial commit `ba731ac` verified. |
-| P02 | Active | P02.1 PostgreSQL infrastructure through P02.5 database integrity tests complete; P02.6 remains. |
+| P02 | Complete | P02.1–P02.6 database foundation, migration, integrity tests, and fresh-database reproducibility audit complete. |
 | P02.1 | Complete | Compose PostgreSQL 16.16 healthy, local connectivity and database checks passed, and named-volume persistence verified after restart (see completion log). |
 | P02.2 | Complete | Drizzle ORM/Kit, lazy node-postgres pool, URL validation, CLI config and scripts verified; no tables or migrations created (see completion log). |
 | P02.3 | Complete | Eight documented KriyZen-owned tables and workspace-scoped constraints implemented; no migration generated or applied. |
 | P02.4 | Complete | Reviewed initial migration applied; eight KriyZen tables and six enums verified; isolated migration history confirmed. |
 | P02.5 | Complete | Node built-in DB suite passed twice (13/13 each); local-target guard passed, fixtures rolled back, and no marker rows remained. |
-| P02.6–P14 | Not started | — |
+| P02.6 | Complete | Fresh migration schema matched existing KriyZen catalog; required verification passed. |
+| P03–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
 - Safe Next.js-compatible Corsair MCP transport (P08); do not expose generic script execution.
 - Free model quota and provider data-use policy (P08).
 - Hosting and database provider (P13).
+- Production data-retention policy and deletion procedure remain undecided.
+- Corsair SDK version, node-postgres compatibility, and vendor migration ownership must be confirmed before installing or initializing Corsair in P03.
 - Assignment videos have not been inspected.
-- Dependency audit findings remain for transitive PostCSS 8.4.31 (2 high, 2 moderate advisories) and shadcn CLI's minimatch 10.2.6 (1 moderate advisory). No forced audit fix or automatic upgrade was applied; review/resolve before public deployment.
+- Latest `pnpm audit` (2026-11-26): 6 advisories (2 high, 4 moderate): PostCSS 8.4.31 via Next.js (2 high, 2 moderate; patched >=8.5.23), esbuild 0.18.20 via Drizzle Kit's legacy loader (moderate; patched >=0.25.0), and minimatch 10.2.6 via shadcn CLI (moderate; patched >=11.0.1). Compatible remediation options are recorded in SECURITY.md. No forced override or upgrade was applied; re-audit and resolve before public deployment.
 - The tRPC health procedure is public and returns only status/time for the foundation check. Restrict or remove it before any public deployment, in keeping with the security rules.
 
 ## Handoff template
 Date / phase / status / completed / changed files / commands and actual outcomes / manual verification / decisions / known blockers / next smallest task. Update after each work session; never log secrets or email content.
+
+## P02.6 completion log (2026-11-26)
+- Started from clean `main` at P02.5 commit `0bce36e6040e08479940a26fbe1612d4af12d7c9`, synchronized with `origin/main`. Frozen install passed. Installed direct database versions remain Next.js 15.5.29, Drizzle ORM 0.45.4, Drizzle Kit 0.31.11, pg 8.23.1, Zod 4.6.7, and test loader tsx 4.23.15.
+- Verified `kriyzen-postgres-1` healthy on `127.0.0.1:5433`; database `kriyzen` contains eight `kz_*` tables, six enums, one row in `kriyzen_migrations.__drizzle_migrations`, and no P02.5 marker rows. No Corsair tables were present.
+- Applied the committed migration in a randomly named temporary local database. Compared normalized enum labels, all KriyZen table columns/types/nullability/defaults, constraints, and indexes with the existing database. Both schemas matched: 8 tables, 6 enums, 33 constraints, 23 indexes, and one migration-history row; both had zero Corsair tables. Dropped only the generated temporary database and confirmed no `kriyzen_p026_repro_*` databases remain. The existing KriyZen database and Zyra container were not modified.
+- Reviewed test safety and found no false positives: database constraint cases assert explicit PostgreSQL SQLSTATEs, each fixture transaction rolls back, a marker check confirms cleanup, the suite refuses non-loopback/wrong database targets, and probes print no credential-bearing errors. No schema or migration change was made.
+- `pnpm install --frozen-lockfile`, `pnpm test:db` (13 passed, 0 failed), `pnpm db:check`, `pnpm typecheck`, `pnpm lint`, and `pnpm build` passed. The first default-sandbox audit call could not reach npm's security endpoint; the elevated retry completed and reported 6 advisories (2 high, 4 moderate). No remediation was forced. See SECURITY.md for package paths, patched-version thresholds, and compatible options.
+- Remaining limits: app-level authentication/authorization and action lifecycle enforcement are unimplemented; Corsair exact version/driver/schema/migration ownership are P03 gates; production database hosting and retention policy are undecided. No public DB diagnostic endpoint was added; existing tRPC health procedure is unchanged. P02 and P02.6 complete; stop before P03.
 
 ## P02.5 completion log (2026-11-26)
 - Verified clean `main` at P02.4 commit `b0a6f4ed0b0fd185ee6a21de0ecee93eb2c92a35`, synchronized with `origin/main`; KriyZen PostgreSQL 16.16 was healthy on `127.0.0.1:5433`, database `kriyzen` was reachable, and migration history contained one entry. No schema migration or reset was performed.

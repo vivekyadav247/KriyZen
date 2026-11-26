@@ -58,6 +58,8 @@ The suite refuses any target other than loopback port 5433 and database `kriyzen
 
 `db:check` is the official `drizzle-kit check` command. The other scripts map directly to supported Drizzle Kit commands. There is intentionally no schema-push script. KriyZen Drizzle Kit loads only `src/server/db/schema/index.ts` and applies the secondary `kz_*` table filter; inspect generated SQL rather than relying on the filter alone. Migration history is isolated in `kriyzen_migrations.__drizzle_migrations`, separate from public app tables and future Corsair history. The reviewed initial migration is `drizzle/0000_equal_beast.sql`. P02.4 applied it to the local KriyZen database: six `kz_*` enums and eight `kz_*` tables; no Corsair objects were created. Always review generated SQL and verify the local catalog after applying. Corsair's exact schema and migration behavior must be checked against a pinned SDK before P03. Do not use destructive schema push against production.
 
+P02.6 verified fresh-database reproducibility by applying the committed migration to a randomly named temporary local database, comparing normalized catalog definitions with `kriyzen`, and removing only that temporary database. The KriyZen database was not reset. P02 is complete; P03 still requires pinning and reviewing the Corsair SDK's database ownership and driver compatibility before initialization.
+
 ## P03 Google and Corsair connectivity
 
 Use dedicated test accounts. Verify current Google Cloud consent, Gmail/Calendar API setup, exact redirect URIs, and minimum scopes from official Google documentation before creating credentials. Identity sign-in and Gmail/Calendar grants are separate decisions.

@@ -17,6 +17,8 @@ P02.4 generated and applied `drizzle/0000_equal_beast.sql`. The migration create
 
 P02.5's `pnpm test:db` integration suite connects through the lazy Drizzle client and checks representative inserts and integrity constraints against PostgreSQL. It uses synthetic rows in rolled-back transactions and makes no schema changes. Verified SQLSTATEs include `23502`, `23503`, `23505`, `22P02`, and `23514`. These database constraints enforce relational integrity, but do not replace server authorization: derive workspace/tenant from a verified session, validate Corsair account ownership, and enforce current approval/hash/expiry and action-step lifecycle rules in server code.
 
+P02.6 applied the committed migration to a uniquely named, empty local verification database and compared normalized enum labels, table columns/defaults, constraints, and indexes against `kriyzen`. Both contained eight application tables, six enums, 33 constraints, 23 indexes, and one application-owned migration-history row, with no Corsair tables. The temporary database was removed; the existing `kriyzen` database and schema were not reset or changed.
+
 ## Entity relationship diagram
 ```mermaid
 erDiagram

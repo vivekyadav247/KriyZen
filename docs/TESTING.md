@@ -8,6 +8,10 @@ The database integration suite uses Node.js's built-in `node:test` runner with `
 
 Each SQL fixture runs in an independent transaction that is rolled back; a final marker query checks that synthetic user rows did not remain. This suite tests database integrity only. It does not prove session authentication, tenant derivation from a verified identity, Corsair account ownership, approval revision/hash checks, step transition rules, or exactly-once provider writes; those remain server-side responsibilities and later phase tests.
 
+### P02.6 migration reproducibility
+
+The release audit created a randomly named temporary local database, applied the committed migration there, compared normalized table/enum/constraint/index definitions to the existing `kriyzen` database, confirmed the isolated migration-history row and absence of Corsair objects, then dropped only that generated temporary database. The existing `kriyzen` database was not reset. This one-time audit is recorded in `docs/PROGRESS.md`.
+
 | Test ID | Scenario | Expected |
 |---|---|---|
 | T01 | Unauthenticated workspace, tRPC and chat | denied, no cache/model access |
