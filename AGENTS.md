@@ -15,7 +15,9 @@ Read this file before edits. Read docs/PRD.md, docs/TECH_STACK.md, docs/ARCHITEC
 1. Read phase gate and inspect current code, git diff and installed dependency versions.
 2. State intended changes, files and uncertainties. Ask for approval for architecture changes or destructive actions; do not stall ordinary implementation.
 3. Implement the smallest vertical slice with actual tests. Never report mock data as a working integration.
-4. Run relevant checks (inspect package.json for exact scripts), including typecheck, lint, tests and build at release gates. State commands/results honestly; never claim unrun checks passed.
-5. Summarize changed files, manual verification, known issues and next step. Update PROGRESS and decision log only with verified facts. Suggest a focused commit; do not commit/push unless authorized.
+4. Run the required verification checks for the subphase (inspect package.json for exact scripts), including typecheck, lint, tests and build at release gates. State commands/results honestly; never claim unrun checks passed.
+5. Update `docs/PROGRESS.md` and relevant documentation with verified facts before committing. Inspect the complete Git diff and staged files for secrets, generated artifacts, temporary verification files, and unrelated changes. Stage only files belonging to the completed subphase; do not include unrelated user changes.
+6. After every successfully implemented and verified subphase, create a descriptive Conventional Commit and push it to `origin/main`. This is the approved permanent workflow; do not wait for separate commit approval. Never commit failed or incomplete work. Never commit `.env.local`, credentials, `node_modules`, `.next`, or temporary verification files. Never force-push, rewrite history, or bypass Git hooks. If commit or push fails, report the blocker without claiming success. After pushing, verify the latest commit, clean working tree, and synchronization with `origin/main`.
+7. Summarize changed files, verification results, manual checks, known issues, and the next phase. Do not begin a later phase unless requested.
 
 If docs conflict: stop the conflicting change, explain, and request a decision. User-approved changes in DECISIONS supersede older prose; update related docs together.

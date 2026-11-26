@@ -3,6 +3,16 @@
 ## Ownership and modeling assumptions
 One database. Preserve the official starter's Corsair table definitions/migration ownership; app tables use `kz_` prefix. Reconcile against installed Corsair version before migration. This is a design, not an executable migration. Personal workspace, one account per provider, opaque Google/Corsair IDs stored as text. App identifiers are UUID; timestamps are timestamptz except explicitly date-only event fields (held by provider). Use JSONB only for flexible validated payloads, not ownership or statuses.
 
+## Runtime connection foundation (P02.2)
+
+The application uses Drizzle ORM with its `node-postgres` driver and a `pg.Pool`. The pool and Drizzle client are created lazily by `src/server/db/index.ts` on first `getDb()` call, cached on `globalThis` during Next.js development reloads, and marked server-only. Pool defaults are 10 clients, a 5-second connection timeout, and a 30-second idle timeout. Importing the module alone does not validate the URL, create a pool, or connect.
+
+`DATABASE_URL` is validated by the shared Zod environment schema only when `getDb()` is called or Drizzle Kit loads its config. Errors name the variable and safe requirement, never echo its value. Next.js loads `.env.local` in app runtime; `drizzle.config.ts` uses the version-matched `@next/env` loader when Drizzle Kit runs outside Next.js. Production builds and routes that do not call `getDb()` need no database connection.
+
+The Corsair Google Demo package reviewed for P02.2 uses `drizzle-orm@^0.41.0` with the `postgres` (postgres.js) driver, not `pg`. This is a driver choice in that demo, not a PostgreSQL or Corsair requirement. Drizzle's current official PostgreSQL documentation supports both node-postgres and postgres.js; this app uses node-postgres because P02.2 explicitly establishes a `pg.Pool`. Corsair's own schema, migration ownership, and any shared-pool needs must still be checked against the installed Corsair version before migrations or integration setup.
+
+P02.2 adds no tables and generates or applies no migrations. KriyZen-owned tables remain the proposed `kz_` schema below; implementation begins only after the migration baseline is reconciled in P02.3.
+
 ## Entity relationship diagram
 ```mermaid
 erDiagram

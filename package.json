@@ -7,7 +7,11 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "db:generate": "drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:studio": "drizzle-kit studio",
+        "db:check": "drizzle-kit check"
     },
     "dependencies": {
         "@tanstack/react-query": "^5.108.4",
@@ -16,8 +20,10 @@
         "@trpc/tanstack-react-query": "^11.31.3",
         "class-variance-authority": "^0.7.1",
         "cn": "^0.5.2",
+        "drizzle-orm": "0.45.4",
         "lucide-react": "^1.80.0",
         "next": "15.5.29",
+        "pg": "8.23.1",
         "radix-ui": "^1.8.1",
         "react": "19.1.0",
         "react-dom": "19.1.0",
@@ -28,10 +34,13 @@
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
+        "@next/env": "15.5.29",
         "@tailwindcss/postcss": "^4",
         "@types/node": "^20",
+        "@types/pg": "8.16.0",
         "@types/react": "^19",
         "@types/react-dom": "^19",
+        "drizzle-kit": "0.31.11",
         "eslint": "^9",
         "eslint-config-next": "15.5.29",
         "shadcn": "4.23.0",

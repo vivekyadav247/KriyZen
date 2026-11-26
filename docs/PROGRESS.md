@@ -1,17 +1,20 @@
 ﻿# Development progress — handoff log
 
-Current status: P00 documentation preparation and P01.2–P01.6 foundation work are complete. P01.6 is awaiting the initial Git commit; P02 has not started. No Google credentials, database migrations, or deployment have been configured.
+Current status: P00 and P01 foundation are complete. P02 is active; P02.1 and P02.2 are complete. P02.3 schema implementation has not started. The initial foundation commit is `ba731ac` on `main`.
 
 | Phase | Status | Evidence |
 |---|---|---|
 | P00 | Complete | Documentation pack prepared; assignment videos remain uninspected |
-| P01 | Complete | P01.1–P01.6 foundation audit complete; awaiting the initial Git commit before P02. |
+| P01 | Complete | P01.1–P01.6 foundation audit complete; initial commit `ba731ac` verified on `main` and `origin/main`. |
 | P01.2 | Complete | Fresh Next.js scaffold merged; install, typecheck, lint, build, and localhost smoke check passed (see completion log). |
 | P01.3 | Complete | Radix-based shadcn/ui initialized; Tailwind v4 and aliases verified; component preview served successfully; typecheck, lint, and production build passed. |
 | P01.4 | Complete | tRPC v11 backend and client foundation verified by typecheck, lint, build, direct API request, and headless browser client query. |
 | P01.5 | Complete | Zod environment allowlists, safe local template, Next.js loading, secret ignore rules, parser and production app checks verified (see completion log). |
-| P01.6 | Complete; awaiting initial Git commit | Cleaned temporary verification routes, reconciled docs, audited dependencies and security boundaries, and passed frozen install/typecheck/lint/build/production smoke checks (see completion log). |
-| P02–P14 | Not started | — |
+| P01.6 | Complete | Foundation audit passed; initial commit `ba731ac` verified. |
+| P02 | Active | P02.1 PostgreSQL infrastructure and P02.2 Drizzle foundation complete; stop before P02.3. |
+| P02.1 | Complete | Compose PostgreSQL 16.16 healthy, local connectivity and database checks passed, and named-volume persistence verified after restart (see completion log). |
+| P02.2 | Complete | Drizzle ORM/Kit, lazy node-postgres pool, URL validation, CLI config and scripts verified; no tables or migrations created (see completion log). |
+| P02.3–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
@@ -24,6 +27,27 @@ Current status: P00 documentation preparation and P01.2–P01.6 foundation work 
 
 ## Handoff template
 Date / phase / status / completed / changed files / commands and actual outcomes / manual verification / decisions / known blockers / next smallest task. Update after each work session; never log secrets or email content.
+
+## P02.2 completion log (2026-11-26)
+- Installed exact versions: runtime `drizzle-orm@0.45.4` and `pg@8.23.1`; development `drizzle-kit@0.31.11`, `@types/pg@8.16.0`, and `@next/env@15.5.29` (matched to Next.js 15.5.29). Registry metadata showed Drizzle ORM accepts `pg >=8`; `pg@8.23.1` supports Node >=16. Official Drizzle docs support its node-postgres driver. The Corsair Google Demo package uses `drizzle-orm@^0.41.0` and `postgres@^3.4.4` (postgres.js), but does not specify a required pg driver or PostgreSQL major version. Corsair schema/migration compatibility remains to be reconciled before P02.3 migrations.
+- Extended `src/env.schema.ts` with safe `DATABASE_URL` validation. Missing, malformed, and non-PostgreSQL URLs produce actionable variable-based errors without echoing values. Database parsing is lazy so global Next environment validation, unrelated routes, and builds do not require it.
+- Added `src/server/db/index.ts` with a server-only, lazy Drizzle `node-postgres` client. It creates one `pg.Pool` on first `getDb()`, caches it on `globalThis` through development reloads, rejects a changed URL with a safe restart instruction, and uses `max: 10`, `connectionTimeoutMillis: 5000`, `idleTimeoutMillis: 30000`. Added an empty schema placeholder at `src/server/db/schema/index.ts` and `drizzle/.gitkeep`; no application tables exist.
+- Added `drizzle.config.ts` using PostgreSQL dialect, `src/server/db/schema/index.ts`, `./drizzle`, and the validated `DATABASE_URL`. It explicitly loads `.env.local` through `@next/env`, which Next.js uses for tools outside its runtime. Added `db:generate`, `db:migrate`, `db:studio`, and `db:check` scripts; no schema-push script. Installed Drizzle Kit CLI lists all four commands, and `pnpm db:check` loaded the config and passed.
+- pnpm's install-script policy initially blocked esbuild's native binary setup, which Drizzle Kit needs. Approved only esbuild and recorded that allowlist in `pnpm-workspace.yaml`. `drizzle-kit check` created an empty migration journal; it contained zero entries and was removed after verification. No SQL migration was generated or applied.
+- Verification passed: frozen pnpm install; `pnpm typecheck`; `pnpm lint`; production `pnpm build` while an invalid test `DATABASE_URL` was set; production `/` and `/api/trpc/health` returned HTTP 200 with invalid DB configuration; Zod tests passed for valid, missing, malformed, and non-Postgres URL cases without exposing a sentinel credential; Drizzle/node-postgres ran `SELECT 1` and returned `1`; public table count is 0; PostgreSQL container remains healthy. No `db:generate` or `db:migrate` was run.
+- Updated `docs/DATABASE.md`, `docs/SETUP.md`, `docs/PROJECT_STRUCTURE.md`, and `docs/REFERENCES.md` with driver rationale, pool lifecycle, environment loading, CLI scripts, and the remaining Corsair schema/migration review.
+- P02.2 complete. Stop before P02.3.
+
+## P02.1 completion log (2026-11-26)
+- Verified Git before editing: clean `main`, HEAD `ba731ac` (`chore: initialize KriyZen application foundation`), aligned with `origin/main`.
+- Docker CLI 29.6.1 and Compose v5.2.0 are installed. Docker Desktop was initially stopped and was started; daemon 29.6.1 is now running. The project database docs and installed packages specify no Corsair-required PostgreSQL major version; Corsair packages are not installed. PostgreSQL 16 was therefore used as requested, pinned to official image `postgres:16.16-bookworm`.
+- Host port 5432 is occupied by a pre-existing `zyra-postgres` PostgreSQL 17 container. It was left untouched. KriyZen uses port 5433 bound to `127.0.0.1` only.
+- Added `compose.yaml` with one PostgreSQL service, `unless-stopped`, named volume `kriyzen-postgres-data`, health check, explicit environment interpolation, and loopback-only published port. Compose environment loading is explicit in every command via `docker compose --env-file .env.local`; Compose is not assumed to read Next.js env files by itself.
+- Updated `.env.example` with safe placeholders for `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST_PORT`, and the matching local `DATABASE_URL`. Created ignored `.env.local` using a generated random local password; the value was not printed. No credentials were added to tracked files.
+- `docker compose --env-file .env.local config --quiet` passed. Container `kriyzen-postgres-1` reached healthy status. `psql` reported database `kriyzen`, PostgreSQL `16.16`, and `SELECT 1` returned `1`. Host TCP check for `127.0.0.1:5433` passed and the published binding is loopback-only.
+- Persistence check captured PostgreSQL's system identifier, ran a normal `docker compose ... restart postgres`, waited for healthy status, and confirmed the same cluster identifier, database, and `SELECT 1` afterward. The named volume was retained; no destructive SQL or app tables were created.
+- Updated `docs/SETUP.md` with start, inspect, logs, psql, restart, and stop commands and the explicit `.env.local` Compose flag. No Drizzle dependency, migration, schema, or application table was added.
+- P02.1 complete. Stop before P02.2.
 
 ## P01.6 completion log (2026-11-26)
 - Architecture review confirmed the single Next.js App Router app, Tailwind v4/shadcn/Radix, tRPC v11/TanStack Query, SuperJSON, Zod, and existing locked versions. No duplicate Tailwind configuration was found; Tailwind v4 is configured through the CSS import and PostCSS plugin. `src/lib/utils.ts` re-exports `cn`; the installed `cn@0.5.2` runtime checks passed for conditional class joining and Tailwind conflict resolution. The shadcn CLI was moved from dependencies to devDependencies at the same version because it is tooling, not app runtime. Other inspected direct dependencies are used by the application or its foundation/tooling.

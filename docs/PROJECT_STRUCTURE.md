@@ -7,6 +7,8 @@ kriyzen/
   AGENTS.md
   README.md
   .env.example
+  compose.yaml                   # local-only PostgreSQL
+  drizzle.config.ts             # Drizzle Kit config, server-side URL
   docs/
   drizzle/                     # reviewed migration history
   src/

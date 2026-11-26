@@ -18,6 +18,11 @@ Implementation references to consult and verify at each phase:
 - https://nextjs.org/docs/app
 - https://trpc.io/docs
 - https://orm.drizzle.team/docs/overview
+- https://orm.drizzle.team/docs/get-started-postgresql
+- https://orm.drizzle.team/docs/drizzle-config-file
+- https://orm.drizzle.team/docs/drizzle-kit-check
+- https://nextjs.org/docs/app/guides/environment-variables
+- Corsair Google Demo package metadata (Drizzle and `postgres` driver versions): https://raw.githubusercontent.com/corsairdev/google-demo/main/package.json
 - https://ui.shadcn.com/docs
 - https://ai-sdk.dev/docs
 - https://console.groq.com/docs/rate-limits
