@@ -1,6 +1,6 @@
 ﻿# Development progress — handoff log
 
-Current status: P00 and P01 foundation are complete. P02 is active; P02.1, P02.2, and P02.3 are complete. P02.4 migration work is not started. The initial foundation commit is `ba731ac` on `main`.
+Current status: P00 and P01 foundation are complete. P02 is active; P02.1 through P02.4 are complete. P02.5 is not started. The initial foundation commit is `ba731ac` on `main`.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -11,11 +11,12 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1, P02.2
 | P01.4 | Complete | tRPC v11 backend and client foundation verified by typecheck, lint, build, direct API request, and headless browser client query. |
 | P01.5 | Complete | Zod environment allowlists, safe local template, Next.js loading, secret ignore rules, parser and production app checks verified (see completion log). |
 | P01.6 | Complete | Foundation audit passed; initial commit `ba731ac` verified. |
-| P02 | Active | P02.1 PostgreSQL infrastructure, P02.2 Drizzle foundation, and P02.3 KriyZen-owned schema complete; P02.4 is not started. |
+| P02 | Active | P02.1 PostgreSQL infrastructure through P02.4 initial application migrations complete; P02.5 remains. |
 | P02.1 | Complete | Compose PostgreSQL 16.16 healthy, local connectivity and database checks passed, and named-volume persistence verified after restart (see completion log). |
 | P02.2 | Complete | Drizzle ORM/Kit, lazy node-postgres pool, URL validation, CLI config and scripts verified; no tables or migrations created (see completion log). |
 | P02.3 | Complete | Eight documented KriyZen-owned tables and workspace-scoped constraints implemented; no migration generated or applied. |
-| P02.4–P14 | Not started | — |
+| P02.4 | Complete | Reviewed initial migration applied; eight KriyZen tables and six enums verified; isolated migration history confirmed. |
+| P02.5–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
@@ -28,6 +29,13 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1, P02.2
 
 ## Handoff template
 Date / phase / status / completed / changed files / commands and actual outcomes / manual verification / decisions / known blockers / next smallest task. Update after each work session; never log secrets or email content.
+
+## P02.4 completion log (2026-11-26)
+- Verified clean Git state on `main` at P02.3 commit `8b3e40f8bc20d4d74303406cbf693a19e08b1548`, synchronized with `origin/main`. KriyZen PostgreSQL container was healthy on loopback `127.0.0.1:5433`; read-only query confirmed database `kriyzen`, PostgreSQL 16.16, and no prior KriyZen or migration objects. Zyra was not changed.
+- Configured Drizzle migration history as `kriyzen_migrations.__drizzle_migrations` (ADR-016). Drizzle Kit 0.31.11 supports `migrations.schema` and `migrations.table`; the CLI passes these to the PostgreSQL migrator. The schema entry point exports only KriyZen tables, with `kz_*` as an additional filter. This isolates history, not future object ownership; inspect pinned Corsair setup/migrations before P03.
+- `pnpm db:generate` created `drizzle/0000_equal_beast.sql`, `drizzle/meta/0000_snapshot.json`, and updated `drizzle/meta/_journal.json`. Reviewed SQL contained six KriyZen enums, eight documented tables, PKs, expected workspace-scoped FKs, uniqueness/check constraints, indexes, defaults, and restrictive delete behavior. It contained no destructive statements, Corsair objects, or undocumented tables.
+- `pnpm db:migrate` applied successfully. Read-only catalog verification found all eight public `kz_*` tables, all six enums, 33 table constraints, 23 indexes, one migration history row in the application-owned namespace, and zero `corsair_%` tables. FK catalog definitions show `ON DELETE RESTRICT`. No application rows were inserted.
+- `pnpm db:check` passed. A second `pnpm db:migrate` passed without reapplying the migration. `pnpm typecheck`, `pnpm lint`, and `pnpm build` passed (build run outside sandbox after the sandbox blocked worker spawn). No dependency changes. P02.4 complete; stop before P02.5.
 
 ## P02.3 completion log (2026-11-26)
 - Implemented the eight documented KriyZen-owned tables in `src/server/db/schema/`: users, workspaces, connections, conversations, chat messages, action plans, action steps, and activity. Added PostgreSQL enums, documented defaults, checks, unique constraints, indexes, workspace-scoped composite foreign keys, restrictive delete behavior, and Drizzle relations. The schema entry point contains KriyZen tables only and is wired into the lazy server-only Drizzle client.

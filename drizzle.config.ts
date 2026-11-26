@@ -12,6 +12,10 @@ export default defineConfig({
   schema: "./src/server/db/schema/index.ts",
   tablesFilter: ["kz_*"],
   out: "./drizzle",
+  migrations: {
+    schema: "kriyzen_migrations",
+    table: "__drizzle_migrations",
+  },
   dbCredentials: {
     url: DATABASE_URL,
   },
