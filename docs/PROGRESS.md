@@ -1,6 +1,6 @@
 ﻿# Development progress — handoff log
 
-Current status: P00, P01, and P02 are complete. P02.6 final database audit is complete. P03 Google/Corsair connectivity has not started. The initial foundation commit is `ba731ac` on `main`.
+Current status: P00, P01, and P02 are complete. P02.6 final database audit is complete. P03.1 exact-release compatibility is complete; Corsair packages remain uninstalled in KriyZen. Latest prior project commit: `bec9e1ce566bf567d391754243fb41f8d1338893`.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -18,7 +18,9 @@ Current status: P00, P01, and P02 are complete. P02.6 final database audit is co
 | P02.4 | Complete | Reviewed initial migration applied; eight KriyZen tables and six enums verified; isolated migration history confirmed. |
 | P02.5 | Complete | Node built-in DB suite passed twice (13/13 each); local-target guard passed, fixtures rolled back, and no marker rows remained. |
 | P02.6 | Complete | Fresh migration schema matched existing KriyZen catalog; required verification passed. |
-| P03–P14 | Not started | — |
+| P03 | In progress | P03.1 compatibility verified; no SDK installed in KriyZen. |
+| P03.1 | Complete | Isolated package/runtime, disposable PostgreSQL, five-table DDL, shared-pool, setup repeatability, permission lifecycle, dependency audit, and original database immutability checks passed. |
+| P03.2–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
@@ -26,7 +28,16 @@ Current status: P00, P01, and P02 are complete. P02.6 final database audit is co
 - Free model quota and provider data-use policy (P08).
 - Hosting and database provider (P13).
 - Production data-retention policy and deletion procedure remain undecided.
-- Corsair SDK version, node-postgres compatibility, and vendor migration ownership must be confirmed before installing or initializing Corsair in P03.
+- Recommend candidate pins `corsair@0.2.33`, Gmail `0.1.13`, Calendar `0.1.10`, CLI `0.1.114`; exact tested versions and runtime results are in `docs/REFERENCES.md` and ADR-017. No Corsair package is installed in KriyZen; core publishes no Node engine range.
+- P03.1 official DDL/schema, setup, permission, shared-pool and catalog-isolation checks passed in the disposable database. Use separately versioned/reviewed Corsair SQL and separate migration history; do not change KriyZen's Drizzle schema or ADR-016 history.
+- Recommend self-managed OAuth for zero-budget development. ADR-018 owner approval remains before implementation; P04 must supply session binding, CSRF/replay protection, authorization and server-derived tenant mapping. MCP transport remains P08.
+
+## P03.1 research log (2026-11-26; complete)
+- Read the P03.1 phase gate and project PRD, architecture, stack, database, security, setup, reference, decision, roadmap, development-rule, and progress documents. Confirmed clean Git start at `bec9e1ce566bf567d391754243fb41f8d1338893`, `main` synchronized with `origin/main`, and the configured remote is the KriyZen repository. No application code, dependency, route, credential, or database changed.
+- Read exact npm registry metadata without installing packages. Candidate versions are `corsair@0.2.33`, Gmail `0.1.13`, Calendar `0.1.10`, and CLI `0.1.114`. Gmail and Calendar peer constraints accept Corsair `>=0.1.120` and Zod `^4.1.13`; CLI `0.1.114` depends on Corsair `0.2.33`. All four metadata records state Apache-2.0. Core exports Node ESM entry points and React peer `>=18`, but has no declared `engines.node` range; its registry `_nodeVersion` field is build environment, not a support guarantee. The local Node is `v24.13.0`.
+- The temporary runtime project passed Node 24.13.0 package loading, TypeScript 5.9.3 compilation, 24 Gmail + 6 Calendar operation registration, CLI help/version, shared Pool operations, setup repeatability, permission lifecycle, and npm audit (zero advisories / 112 dependency entries). Lifecycle scripts were disabled because core postinstall fetches optional `frpc` to user cache.
+- Official five-table PostgreSQL DDL matched candidate 0.2.33 schemas; disposable DB had 5 vendor tables, 39 columns, 8 constraints, and 5 indexes. KriyZen migration history and normalized schema matched pre/post vendor DDL. Original database matched the full baseline after the disposable DB was dropped. No real app dependencies, routes, schema exports, or production database objects changed.
+- P03.1 is complete. Exact pins are recommended in ADR-017 for P03.2 approval. ADR-018 recommends self-managed OAuth but leaves hosting approval pending; P04 owns app session binding, CSRF/replay, authorization, and tenant mapping. No real Google connectivity was tested.
 - Assignment videos have not been inspected.
 - Latest `pnpm audit` (2026-11-26): 6 advisories (2 high, 4 moderate): PostCSS 8.4.31 via Next.js (2 high, 2 moderate; patched >=8.5.23), esbuild 0.18.20 via Drizzle Kit's legacy loader (moderate; patched >=0.25.0), and minimatch 10.2.6 via shadcn CLI (moderate; patched >=11.0.1). Compatible remediation options are recorded in SECURITY.md. No forced override or upgrade was applied; re-audit and resolve before public deployment.
 - The tRPC health procedure is public and returns only status/time for the foundation check. Restrict or remove it before any public deployment, in keeping with the security rules.

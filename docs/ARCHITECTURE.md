@@ -28,6 +28,10 @@ flowchart TD
 
 The model proposes plans; approval and execution service is the only AI-originated write boundary. The arrow from AI to approval service is proposal creation, not approval. Manual UI mutations are separately authorized and explicit. MCP server/transport compatibility is a blocking design spike (see AI_AGENT); do not introduce Express to copy an upstream example.
 
+### Corsair setup boundary (P03.1 research; not yet adopted)
+
+The isolated P03.1 runtime project verified candidate imports, plugin registration, TypeScript compilation, CLI loading, real PostgreSQL operations, and shared-pool use on a disposable database. `corsair@0.2.33` used the same `pg.Pool` as Drizzle; both remained usable after Corsair queries and setup. The official five-table PostgreSQL DDL matched the candidate package’s row types and worked with setup and permission APIs. Self-managed OAuth via `generateOAuthUrl` / `processOAuthCallback` is the recommended zero-budget P03 path; Hub is an optional hosted alternative. OAuth mode and app-side session/CSRF/replay/tenant controls remain implementation requirements under ADR-018 and P04. Vendor SQL should be separately versioned and reviewed with migration history independent of ADR-016; no vendor schema was applied to the real KriyZen database. KriyZen has no Corsair route/client configured. Do not expose integration routes until route authorization and callback/webhook authentication are implemented.
+
 ## Module design
 | Module | Owns | Depends on |
 |---|---|---|

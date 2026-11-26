@@ -1,7 +1,7 @@
 # Database design — PostgreSQL + Drizzle
 
 ## Ownership and modeling assumptions
-One database. Preserve the official starter's Corsair table definitions/migration ownership; app tables use `kz_` prefix. Reconcile against installed Corsair version before migration. This is a design, not an executable migration. Personal workspace, one account per provider, opaque Google/Corsair IDs stored as text. App identifiers are UUID; timestamps are timestamptz except explicitly date-only event fields (held by provider). Use JSONB only for flexible validated payloads, not ownership or statuses.
+One PostgreSQL database is planned. Corsair owns its vendor objects and KriyZen owns `kz_*` application tables. Vendor DDL and migration mechanism remain unverified for the candidate release; do not initialize vendor objects until complete version-supported definitions are available. This document describes design, not executable migration SQL. Personal workspace, one account per provider, opaque Google/Corsair IDs stored as text. App identifiers are UUID; timestamps are timestamptz except explicitly date-only event fields (held by provider). Use JSONB only for flexible validated payloads, not ownership or statuses.
 
 ## Runtime connection foundation (P02.2)
 
@@ -9,7 +9,7 @@ The application uses Drizzle ORM with its `node-postgres` driver and a `pg.Pool`
 
 `DATABASE_URL` is validated by the shared Zod environment schema only when `getDb()` is called or Drizzle Kit loads its config. Errors name the variable and safe requirement, never echo its value. Next.js loads `.env.local` in app runtime; `drizzle.config.ts` uses the version-matched `@next/env` loader when Drizzle Kit runs outside Next.js. Production builds and routes that do not call `getDb()` need no database connection.
 
-The Corsair Google Demo package reviewed for P02.2 uses `drizzle-orm@^0.41.0` with the `postgres` (postgres.js) driver, not `pg`. This is a driver choice in that demo, not a PostgreSQL or Drizzle requirement. The current public Corsair source inspected for P02.3 accepts a `pg.Pool` and wraps it with Kysely's PostgreSQL dialect; this does not verify the behavior of a future pinned Corsair package. Resolve Corsair installation, exact-version compatibility, schema setup, and migration ownership before initializing it in P03.
+The Corsair Google Demo package reviewed for P02.2 uses `drizzle-orm@^0.41.0` with the `postgres` (postgres.js) driver, not `pg`. This is a starter choice, not a PostgreSQL or Drizzle requirement. Exact-release static review of `corsair@0.2.33` declarations and runtime adapter confirms `pg.Pool` is accepted and wrapped with Kysely's `PostgresDialect({ pool })`. Runtime behavior with KriyZen's actual lazy pool remains unverified and requires an isolated spike before initialization.
 
 P02.3 defines only the KriyZen-owned `kz_*` tables below. The Drizzle schema entry point exports no Corsair tables. `drizzle.config.ts` points only to this KriyZen schema and sets `tablesFilter: ["kz_*"]`. These config filters are an additional guard, not proof that generated SQL is safe; inspect every migration before applying it. Drizzle migration history uses the application-owned `kriyzen_migrations.__drizzle_migrations` table, separate from application objects in `public` and any Corsair migration namespace. This gives each owner independent history; it does not itself guarantee that future Corsair migrations won't alter KriyZen objects, so inspect their version-specific setup before P03.
 
@@ -39,16 +39,29 @@ erDiagram
 ```
 Logical mapping is not an imposed FK across ownership boundaries. Validate tenant + integration + account on every use. Session table is conditional on selected auth mechanism; do not create duplicate library-owned auth storage.
 
-## Corsair-owned tables (starter observed schema, abbreviated)
-| Table | Key columns | Purpose |
-|---|---|---|
-| corsair_integrations | id, name, config, dek, created_at, updated_at | integration configuration |
-| corsair_accounts | id, tenant_id, integration_id, config, dek, created_at, updated_at | tenant connection state |
-| corsair_entities | id, account_id, entity_id, entity_type, version, data, created_at, updated_at | cached provider entities |
-| corsair_events | id, account_id, event_type, payload, status, created_at, updated_at | integration events |
-Do not write encrypted configs or cache rows directly, duplicate provider tokens, or alter Corsair constraints without upstream compatibility review. Cache deduplication may be required by entity ID and newest updated timestamp; IDs are scoped by account and entity type.
+## Corsair-owned objects (research only; no vendor objects applied)
 
-This inventory reflects the previously reviewed four-table Corsair schema. The current public Corsair source also includes `corsair_permissions`; the vendor table inventory is version-dependent. KriyZen does not define or modify any of these vendor tables. Pin and inspect the SDK version, supported pool/ORM adapter, setup behavior, and migration ownership in P03 before initializing Corsair.
+Current official Corsair database docs and the inspected repository source enumerate five tables. The current documentation provides PostgreSQL/Drizzle schema examples, but the retrieved material does not provide a complete, candidate-version-pinned definition for all five objects:
+
+| Table | Purpose documented by Corsair |
+|---|---|
+| `corsair_integrations` | Enabled plugin/integration configuration and integration DEK |
+| `corsair_accounts` | Tenant integration/account configuration and account DEK |
+| `corsair_entities` | Cached provider entities scoped through an account |
+| `corsair_events` | API/webhook event records |
+| `corsair_permissions` | Permission approval queue |
+
+The exact `corsair@0.2.33` package exports `CORSAIR_CORE_TABLE_NAMES` with these five names and row schemas for integrations, accounts, entities, events, and permissions. This confirms the candidate release's table inventory, not future releases; the documentation's conflicting “six” count remains a vendor-doc inconsistency. Do not write vendor credential/cache rows directly, duplicate provider tokens, or alter Corsair constraints.
+
+The exact package's `setupCorsair` introspects configured Corsair tables, warns with missing table/schema details, and provisions integration/account rows and DEKs when possible. It does not issue `CREATE TABLE` or run migrations. Its bundled `createTestDatabase()` creates integrations, accounts, entities, and events for in-memory SQLite tests; it omits `corsair_permissions` and is not a production initializer. No vendor migration runner or history namespace appears in the package artifacts. The official PostgreSQL DDL covers all five tables and was applied only to the disposable P03.1 database; catalog definitions and SDK insert/query/setup tests passed. A separately versioned and reviewed vendor SQL migration with an independent history record is recommended; it must remain outside KriyZen's Drizzle schema and `kriyzen_migrations`. Preserve ADR-016 and do not run `drizzle-kit push` for vendor schema.
+
+Exact-release declarations and runtime adapter accept `pg.Pool` and wrap it with Kysely's `PostgresDialect({ pool })`. An isolated runtime test passed one real Pool to both Corsair and Drizzle, using KriyZen's pool limits (max 10, 5-second connection timeout, 30-second idle timeout). `SELECT 1`, Corsair integration/account/entity/event writes, plugin cache upsert/read, permission lookups/status transitions, and Drizzle queries after Corsair calls all passed. Pool metrics showed one total/idle connection and no waiting clients; Corsair did not create a separate Pool or close the shared pool during operations. The test explicitly ended the Pool. All of this used a disposable DB; original KriyZen remained unchanged.
+
+### Candidate Corsair PostgreSQL schema verification (P03.1)
+
+The official [Corsair database guide](https://docs.corsair.dev/concepts/database) PostgreSQL DDL was compared field by field with `corsair@0.2.33` `db.d.ts` schemas and runtime operations. All five tables, 39 columns, JSONB fields, timestamptz timestamps/defaults, primary keys, and three account/integration foreign keys matched. `corsair_permissions` has 11 columns; token is not unique, `tenant_id` is required text without a KriyZen FK, `args` and ISO `expires_at` are text, and `status` is text with default `pending`. SDK validation defines status values, but PostgreSQL DDL does not enforce a CHECK or token uniqueness. The SDK creates random tokens and performs status transitions using these fields. Preserve the upstream DDL exactly; add application protections only in separately reviewed design work.
+
+Corsair setup on the disposable schema provisioned Gmail and Calendar integration/account rows. Repeating `setupCorsair` left counts unchanged and produced no missing-table warnings. The KriyZen catalog, including normalized definitions, six enums, 33 constraints, 23 indexes, one migration-history row, and all zero application row counts, was identical before and after Corsair schema/setup. The disposable database was removed. A final read-only comparison confirmed the real `kriyzen` database remains unchanged with zero Corsair tables.
 
 ## KriyZen-owned tables (implemented schema, P02.3)
 Notation: `!` required; otherwise nullable. Every id PK UUID, every created_at ! defaults now; updated_at ! where mutable, maintained by application/ORM. All status values constrained via enum/check. Tables below are logical columns; auth library choice can change only identity/session implementation via ADR.
