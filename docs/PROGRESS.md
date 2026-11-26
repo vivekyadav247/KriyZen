@@ -1,6 +1,6 @@
 ﻿# Development progress — handoff log
 
-Current status: P00 and P01 foundation are complete. P02 is active; P02.1 through P02.4 are complete. P02.5 is not started. The initial foundation commit is `ba731ac` on `main`.
+Current status: P00 and P01 foundation are complete. P02 is active; P02.1 through P02.5 are complete. P02.6 is not started. The initial foundation commit is `ba731ac` on `main`.
 
 | Phase | Status | Evidence |
 |---|---|---|
@@ -11,12 +11,13 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1 throug
 | P01.4 | Complete | tRPC v11 backend and client foundation verified by typecheck, lint, build, direct API request, and headless browser client query. |
 | P01.5 | Complete | Zod environment allowlists, safe local template, Next.js loading, secret ignore rules, parser and production app checks verified (see completion log). |
 | P01.6 | Complete | Foundation audit passed; initial commit `ba731ac` verified. |
-| P02 | Active | P02.1 PostgreSQL infrastructure through P02.4 initial application migrations complete; P02.5 remains. |
+| P02 | Active | P02.1 PostgreSQL infrastructure through P02.5 database integrity tests complete; P02.6 remains. |
 | P02.1 | Complete | Compose PostgreSQL 16.16 healthy, local connectivity and database checks passed, and named-volume persistence verified after restart (see completion log). |
 | P02.2 | Complete | Drizzle ORM/Kit, lazy node-postgres pool, URL validation, CLI config and scripts verified; no tables or migrations created (see completion log). |
 | P02.3 | Complete | Eight documented KriyZen-owned tables and workspace-scoped constraints implemented; no migration generated or applied. |
 | P02.4 | Complete | Reviewed initial migration applied; eight KriyZen tables and six enums verified; isolated migration history confirmed. |
-| P02.5–P14 | Not started | — |
+| P02.5 | Complete | Node built-in DB suite passed twice (13/13 each); local-target guard passed, fixtures rolled back, and no marker rows remained. |
+| P02.6–P14 | Not started | — |
 
 ## Current blockers/pending decisions
 - Auth/session approach and per-user integration grant flow (P04).
@@ -29,6 +30,14 @@ Current status: P00 and P01 foundation are complete. P02 is active; P02.1 throug
 
 ## Handoff template
 Date / phase / status / completed / changed files / commands and actual outcomes / manual verification / decisions / known blockers / next smallest task. Update after each work session; never log secrets or email content.
+
+## P02.5 completion log (2026-11-26)
+- Verified clean `main` at P02.4 commit `b0a6f4ed0b0fd185ee6a21de0ecee93eb2c92a35`, synchronized with `origin/main`; KriyZen PostgreSQL 16.16 was healthy on `127.0.0.1:5433`, database `kriyzen` was reachable, and migration history contained one entry. No schema migration or reset was performed.
+- Added `tsx@4.23.15` as a direct dev dependency solely as a TypeScript loader, using Node's built-in `node:test` runner via `pnpm test:db`. Added `tests/db/integrity.test.ts`, a safe configuration probe, and a test-only environment loader.
+- The 13 tests cover successful inserts across all eight tables, defaults and timestamp types, required fields/FKs, unique Google subject and owner workspace, provider uniqueness, enum rejection, cross-workspace message/plan/step references, step ordinal and idempotency uniqueness, all documented CHECK constraints, restrictive deletes, lazy Drizzle connectivity, missing/malformed/unreachable database configuration, rejection of remote/wrong-database targets, and fixture cleanup. Constraint failures assert SQLSTATE `23502`, `23503`, `23505`, `22P02`, and `23514` as appropriate. Both consecutive suite runs passed 13/13; the final marker query found no test rows.
+- Malformed database URL testing exposed that the existing Zod refinement called `new URL()` even after URL validation failed. Added a `URL.canParse` guard in `src/env.schema.ts`; malformed input now returns the safe Zod configuration error without echoing the value. This is environment validation only; database schema and migration remain unchanged.
+- Verification passed: `pnpm test:db` twice (13 passed, 0 failed each), `pnpm db:check`, `pnpm typecheck`, `pnpm lint`, and `pnpm build`. The Node runner/build required execution outside the restricted sandbox because worker process spawning was denied there.
+- Database constraints do not implement session authorization, active tenant derivation, Corsair account validation, action approval freshness/hash enforcement, step lifecycle transitions, or remote idempotency. Those remain server-side requirements. No public database health route was added; the existing tRPC health procedure remains unchanged. P02.5 complete; stop before P02.6.
 
 ## P02.4 completion log (2026-11-26)
 - Verified clean Git state on `main` at P02.3 commit `8b3e40f8bc20d4d74303406cbf693a19e08b1548`, synchronized with `origin/main`. KriyZen PostgreSQL container was healthy on loopback `127.0.0.1:5433`; read-only query confirmed database `kriyzen`, PostgreSQL 16.16, and no prior KriyZen or migration objects. Zyra was not changed.

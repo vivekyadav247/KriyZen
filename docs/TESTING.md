@@ -1,6 +1,12 @@
 # Test plan and release gates
 
-Test runner/library not locked; use starter scripts first, select minimal test tooling with approval. Keep test fixtures synthetic. Run unit, integration and browser/manual tests in separate disposable DB/test Google tenant. No live writes outside intended test recipients. Do not use production credentials in CI.
+The database integration suite uses Node.js's built-in `node:test` runner with `tsx` only to load the existing TypeScript modules. Run it with `pnpm test:db`; it loads `.env.local` through `@next/env` and requires the local KriyZen PostgreSQL database. Tests use synthetic fixtures, transaction rollback, and savepoints for expected constraint failures. No production credentials or real provider accounts belong in tests.
+
+### P02.5 database integrity suite
+
+`tests/db/integrity.test.ts` verifies lazy Drizzle `SELECT 1` connectivity; valid inserts across all eight KriyZen tables; UUID, timestamp, timezone and state defaults; NOT NULL, foreign key, unique, enum, workspace composite-key, ordinal, idempotency, check, and restrictive delete constraints. It verifies safe handling of missing, malformed, and unreachable `DATABASE_URL` using child processes, and refuses to run unless the configured target is `localhost:5433/kriyzen`. Probe output never includes database error text or credentials. Expected PostgreSQL SQLSTATEs are asserted explicitly: `23502` not-null, `23503` foreign key/restrict, `23505` unique, `22P02` enum input, and `23514` check.
+
+Each SQL fixture runs in an independent transaction that is rolled back; a final marker query checks that synthetic user rows did not remain. This suite tests database integrity only. It does not prove session authentication, tenant derivation from a verified identity, Corsair account ownership, approval revision/hash checks, step transition rules, or exactly-once provider writes; those remain server-side responsibilities and later phase tests.
 
 | Test ID | Scenario | Expected |
 |---|---|---|

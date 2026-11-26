@@ -15,6 +15,8 @@ P02.3 defines only the KriyZen-owned `kz_*` tables below. The Drizzle schema ent
 
 P02.4 generated and applied `drizzle/0000_equal_beast.sql`. The migration creates six `kz_*` PostgreSQL enums and the eight documented `kz_*` tables in `public`; its history row is stored in `kriyzen_migrations.__drizzle_migrations`. Catalog review confirmed the objects and constraints after application. Subsequent migrations still require SQL review before apply; do not use `drizzle-kit push`.
 
+P02.5's `pnpm test:db` integration suite connects through the lazy Drizzle client and checks representative inserts and integrity constraints against PostgreSQL. It uses synthetic rows in rolled-back transactions and makes no schema changes. Verified SQLSTATEs include `23502`, `23503`, `23505`, `22P02`, and `23514`. These database constraints enforce relational integrity, but do not replace server authorization: derive workspace/tenant from a verified session, validate Corsair account ownership, and enforce current approval/hash/expiry and action-step lifecycle rules in server code.
+
 ## Entity relationship diagram
 ```mermaid
 erDiagram

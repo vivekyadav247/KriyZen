@@ -18,6 +18,10 @@ const postgresUrlSchema = z
   .string({ error: "is required" })
   .url("must be a valid URL")
   .refine((value) => {
+    if (!URL.canParse(value)) {
+      return false;
+    }
+
     const parsed = new URL(value);
     const isPostgres =
       parsed.protocol === "postgres:" || parsed.protocol === "postgresql:";
